@@ -1,0 +1,85 @@
+EXTENSION OS_DETECTION
+    REM VERSION 1.0
+
+
+    REM TARGET: Windows, Mac, or Linux
+
+
+
+
+    DEFINE VERBOSE FALSE
+    DEFINE STARTUP_DELAY 1500
+    DEFINE RESTART_WAIT 1000
+    DEFINE OS_DETECT_MODE HID
+    DEFINE OS_DETECT_VID VID_05AC
+    DEFINE OS_DETECT_PID PID_021E
+    DEFINE WINDOWS_HOST_REQUEST_COUNT 2
+    DEFINE HOST_RESPONSE_TIMEOUT 1000
+
+
+    FUNCTION DETECT_OS()
+        $_HOST_CONFIGURATION_REQUEST_COUNT = 0
+        ATTACKMODE OS_DETECT_MODE OS_DETECT_VID OS_DETECT_PID
+        DELAY STARTUP_DELAY
+        SAVE_HOST_KEYBOARD_LOCK_STATE
+    
+        IF VERBOSE THEN
+            STRING OS DETECT
+    
+            ENTER
+            STRING test caps
+        END_IF
+    
+        IF ($_CAPSLOCK_ON == FALSE) THEN
+            LED_R
+            CAPSLOCK
+            DELAY HOST_RESPONSE_TIMEOUT 
+        END_IF
+        LED_OFF
+    
+        IF VERBOSE THEN
+            ENTER
+            STRING test done
+        END_IF
+    
+        IF $_RECEIVED_HOST_LOCK_LED_REPLY THEN
+            IF VERBOSE THEN
+                ENTER
+                STRING received led response
+            END_IF
+            LED_G
+            IF ($_HOST_CONFIGURATION_REQUEST_COUNT > WINDOWS_HOST_REQUEST_COUNT) THEN
+                IF VERBOSE THEN
+                    ENTER
+                    STRING prediction: Windows
+                END_IF
+                $_OS = WINDOWS
+            ELSE
+                IF VERBOSE THEN
+                    ENTER
+                    STRING prediction: Linux
+                END_IF
+                $_OS = LINUX
+            END_IF
+        ELSE
+            IF VERBOSE THEN
+                ENTER
+                STRING no led response
+                ENTER
+                STRING prediciton: MacOS
+            END_IF
+            $_OS = MACOS
+        END_IF
+    
+        RESTORE_HOST_KEYBOARD_LOCK_STATE
+        
+        IF VERBOSE THEN
+            ENTER
+            STRING OS_DETECT complete
+            ENTER
+        END_IF
+    END_FUNCTION
+    
+
+    DETECT_OS()
+END_EXTENSION
